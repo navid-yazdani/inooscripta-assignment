@@ -1,0 +1,26 @@
+.custom-input {
+  & input {
+    border: 1px solid var(--mantine-color-cyan-5);
+    &:focus {
+      border: 1px solid var(--mantine-color-cyan-8);
+    }
+  }
+}
+
+.custom-otp-input {
+  & .mantine-TextInput-section {
+    width: 120px;
+    @media (max-width: 350px) {
+      width: 60px;
+    }
+  }
+}
+
+.custom-captcha-input {
+  & .mantine-TextInput-section {
+    padding: 0;
+    width: 112px;
+    background-color: #fcefb0;
+    border-radius: 4px;
+  }
+}
