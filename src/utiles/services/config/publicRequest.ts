@@ -1,5 +1,9 @@
 import axios, {AxiosResponse} from 'axios';
 
+axios.defaults.headers["Accept"] = "application/json";
+axios.defaults.headers["Accept-Language"] = "en";
+axios.defaults.baseURL = 'https://newsapi.org/v2/';
+
 axios.interceptors.request.use(
     (config) => {
         return config;
