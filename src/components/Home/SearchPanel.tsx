@@ -1,14 +1,16 @@
-import React, { useState } from 'react';
+import {FormEvent, useState } from 'react';
 import styled from 'styled-components';
 import useForm from '../../utiles/customHooks/useForm';
 import DatePicker from 'react-datepicker';
 import "react-datepicker/dist/react-datepicker.css";
 
 const Card = styled.div`
-  margin-bottom: 16px;
-  padding: 8px;
-  border: 1px solid #ccc;
-  border-radius: 4px;
+    margin-bottom: 16px;
+    padding: 8px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    width: 650px;
+    margin-inline: auto;
 `;
 
 const Grid = styled.div`
@@ -41,16 +43,6 @@ const TextField = styled.input`
   box-sizing: border-box;
 `;
 
-const Select = styled.select`
-  width: 100%;
-  padding: 12px 20px;
-  margin: 8px 0;
-  display: inline-block;
-  border: 1px solid #ccc;
-  border-radius: 4px;
-  box-sizing: border-box;
-`;
-
 const Button = styled.button`
   width: 45%;
   background-color: ${props => props.color === 'secondary' ? '#f44336' : '#4CAF50'};
@@ -72,62 +64,64 @@ const SearchPanel = () => {
     date: '',
     category: '',
     source: '',
+    author: ''
   });
 
   const [searched, setSearched] = useState(false);
 
-  const { keyword, date, category, source } = formData;
+  const { keyword, date, category, source, author } = formData;
 
-  const handleSearch = (event: Event) => {
+  const handleSearch = (event: FormEvent<HTMLFormElement>) => {
     onSubmitForm(event);
     setSearched(true);
   };
 
   return (
-    <Card style={{ minWidth: '805px' }}>
+    <Card>
       <form onSubmit={handleSearch}>
+        <TextField
+          name='keyword'
+          value={keyword}
+          id='keyword'
+          placeholder='Search by keyword'
+          onChange={onChangeInput}
+        />
         <Grid>
-          <GridItem>
-            <TextField
-              name='keyword'
-              value={keyword}
-              id='keyword'
-              placeholder='Search by keyword'
-              onChange={onChangeInput}
-            />
-          </GridItem>
           {searched && (
             <>
               <GridItem>
                 <DatePicker
-                  selected={date}
-                  onChange={date => onChangeInput({ target: { name: 'date', value: date } })}
+                  selected={date ? new Date(date) : new Date()}
+                  onChange={date => onChangeInput({ target: { name: 'date', value: String(date) } })}
                   customInput={<TextField />}
                 />
               </GridItem>
               <GridItem>
-                <Select
+                <TextField
                   name='category'
                   value={category}
                   id='category'
+                  placeholder='Category'
                   onChange={onChangeInput}
-                >
-                  <option value=''>Select category</option>
-                  <option value='category1'>Category 1</option>
-                  <option value='category2'>Category 2</option>
-                </Select>
+                />
               </GridItem>
               <GridItem>
-                <Select
+                <TextField
                   name='source'
                   value={source}
                   id='source'
+                  placeholder='Source'
                   onChange={onChangeInput}
-                >
-                  <option value=''>Select source</option>
-                  <option value='source1'>Source 1</option>
-                  <option value='source2'>Source 2</option>
-                </Select>
+                />
+              </GridItem>
+              <GridItem>
+                <TextField
+                  name='author'
+                  value={author}
+                  id='author'
+                  placeholder='Author'
+                  onChange={onChangeInput}
+                />
               </GridItem>
             </>
           )}

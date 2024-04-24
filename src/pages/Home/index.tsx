@@ -1,69 +1,167 @@
-import React, {useState} from 'react';
+import React, {useEffect, useState} from 'react';
 import styled from 'styled-components';
-import {News} from "../../utiles/services";
-import {Article} from "../../utiles/services/type.ts";
-import SearchBar from "../../components/Home/SearchBar.tsx";
+import {article, params} from "../../utiles/services/type.ts";
 import SearchPanel from "../../components/Home/SearchPanel.tsx";
+import {useSearchParams} from "react-router-dom";
+import {News} from "../../utiles/services";
 
 const Container = styled.div`
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
-  padding: 20px;
-  @media (max-width: 768px) {
-    padding: 10px;
-  }
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+    grid-auto-rows: auto;
+    grid-gap: 16px;
 `;
 
-const FlexContainer = styled.div`
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: start;
+const Card = styled.div`
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    flex: 1 0 100%;
+    margin: 10px;
+    background-color: #f5f5f5;
+    padding: 20px;
+    border-radius: 10px;
+    box-sizing: border-box;
 `;
-
-const FlexItem = styled.div`
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-  flex: 1 0 100%;
-  margin: 10px;
-  background-color: #f5f5f5;
-  padding: 20px;
-  border-radius: 10px;
-  box-sizing: border-box;
-
-  @media (min-width: 1200px) {
-    flex: 0 0 calc(100% / 6 - 20px);
-  }
-`;
-
 
 const Image = styled.img`
-  max-width: 100%;
-  height: auto;
-  border-radius: 16px;
+    max-width: 100%;
+    height: 200px;
+    border-radius: 16px;
 `;
 
-const TextEellipsis = styled.h2`
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-  text-overflow: ellipsis;
+const HeaderTextEellipsis = styled.h2`
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    text-overflow: ellipsis;
+`;
+
+const TextEellipsis = styled.p`
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    text-overflow: ellipsis;
 `;
 
 const NewsFeed: React.FC = () => {
-  const [articles, setArticles] = useState<Article[]>([]);
+  const [searchParams, setSearchParams] = useSearchParams();
+  const [articles, setArticles] = useState<article[]>([]);
 
-  const convertDate = (timestamp: EpochTimeStamp) => {
+  useEffect(() => {
+    const params: params = {};
+    for (const entry of searchParams.entries()) {
+      params[entry[0]] = entry[1]
+    }
+    if (Object.entries(params).length <= 0) {
+      const storage = localStorage.getItem('params') && JSON.parse(localStorage.getItem('params')!);
+      setSearchParams({...storage});
+    } else {
+      localStorage.setItem('params', JSON.stringify(params));
+    }
+    fetchArticles(params);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchParams]);
+
+  const convertDate = (timestamp: string) => {
     const date = new Date(timestamp);
     return date.toLocaleString('en-US');
   }
 
-  const fetchArticles = (query: string) => {
-    News.getNews({params: {query}}).then(response => {
-      setArticles(response.articles);
+  const fetchArticles = (params: params) => {
+    fetchNewsArticles(params);
+    fetchNewsAiArticles(params);
+    fetchGuardianArticles(params);
+  }
+
+  const fetchNewsArticles = (params: params) => {
+    const newsApi = import.meta.env.VITE_NEWS_API_BASE_URL;
+    const newsApiKey = import.meta.env.VITE_NEWS_API_KEY;
+    const data = {
+      q: params.keyword ? params.keyword : 'bbc',
+      sources: params.source,
+      to: params.date,
+      category: params.category,
+      apiKey: newsApiKey
+    }
+    News.getNews(newsApi, data).then(response => {
+      const news: article[] = [];
+      const data = response.articles as article[];
+      data?.forEach(article => {
+        news.push({
+          author: article.author,
+          title: article.title,
+          description: article.description,
+          image: article.urlToImage!,
+          publishedAt: article.publishedAt,
+          source: article.source
+        })
+      })
+      setArticles((prevState => ([...prevState, ...news])))
+    })
+      .catch(error => {
+        console.error('Error fetching articles:', error);
+      });
+  };
+
+  const fetchNewsAiArticles = (params: params) => {
+    const newsApi = import.meta.env.VITE_NEWS_AI_API_BASE_URL;
+    const newsApiKey = import.meta.env.VITE_NEWS_AI_API_KEY;
+    const data = {
+      keyword: params.keyword ? params.keyword : 'bbc',
+      categoryUri: params.category,
+      sourceUri: params.source,
+      authorUri: params.author,
+      dateEnd: params.date,
+      apiKey: newsApiKey
+    }
+    News.getNews(newsApi, data).then(response => {
+      const news: article[] = [];
+      const data = response.articles as { results?: article[] };
+      data.results?.forEach((article) => {
+        news.push({
+          author: article.authors![0],
+          title: article.title,
+          description: article.body!,
+          image: article.image,
+          publishedAt: article.publishedAt,
+          source: article.source
+        })
+      })
+      setArticles((prevState => ([...prevState, ...news])))
+    })
+      .catch(error => {
+        console.error('Error fetching articles:', error);
+      });
+  };
+
+  const fetchGuardianArticles = (params: params) => {
+    const newsApi = import.meta.env.VITE_GUARDIAN_BASE_URL;
+    const newsApiKey = import.meta.env.VITE_GUARDIAN_API_KEY;
+    const data = {
+      q: params.keyword,
+      section: params.category,
+      published: params.date,
+      author: params.author,
+      'api-key': newsApiKey
+    }
+    News.getNews(newsApi, data).then(response => {
+      const news: article[] = []
+      response.response?.results?.forEach(article => {
+        news.push({
+          author: Array.isArray(article.authors) ? article.authors[0] : '',
+          title: article.webTitle!,
+          description: article.webTitle!,
+          image: '',
+          publishedAt: article.webPublicationDate!,
+          source: {
+            name: 'guardian'
+          }
+        })
+      })
+      setArticles((prevState => ([...prevState, ...news])))
     })
       .catch(error => {
         console.error('Error fetching articles:', error);
@@ -71,21 +169,20 @@ const NewsFeed: React.FC = () => {
   };
 
   return (
-    <Container>
+    <>
       <SearchPanel/>
-      <SearchBar onSearch={(query) => fetchArticles(query)}/>
-      <FlexContainer>
-        {articles.map((article) => (
-          <FlexItem key={article.id}>
-            <Image src={article.urlToImage} alt={article.title}/>
-            <TextEellipsis>{article.title}</TextEellipsis>
-            <p>{article.description}</p>
+      <Container>
+        {articles.map((article, index) => (
+          <Card key={index}>
+            {article.image && <Image src={article.image} alt={article.title}/>}
+            <HeaderTextEellipsis>{article.title}</HeaderTextEellipsis>
+            <TextEellipsis>{article.description}</TextEellipsis>
             <p>{convertDate(article.publishedAt)}</p>
-            <p>{article.source?.name}</p>
-          </FlexItem>
+            <p>{article.source.name?.trim() || article.source.title?.trim()}</p>
+          </Card>
         ))}
-      </FlexContainer>
-    </Container>
+      </Container>
+    </>
   );
 };
 

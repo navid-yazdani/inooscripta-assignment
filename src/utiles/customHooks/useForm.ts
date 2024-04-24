@@ -1,12 +1,13 @@
-import { useEffect, useState } from 'react';
+import {FormEvent, useEffect, useState} from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { isObjectEmpty, removeObjectEmptyValue } from '../../utiles/common';
+import { isObjectEmpty, removeObjectEmptyValue } from '../common';
 
 interface SearchParams {
   keyword: string;
   date: string;
   category: string;
   source: string;
+  author: string;
 }
 
 function useForm(initialState: SearchParams) {
@@ -20,12 +21,13 @@ function useForm(initialState: SearchParams) {
     });
   }, [searchParams]);
 
-  function onChangeInput(event) {
+  function onChangeInput(event: { target: { name: string; value: string; }; }) {
     const { name, value } = event.target;
     setFormData({ ...formData, [name]: value });
   }
 
   function onResetForm() {
+    localStorage.removeItem('params');
     setFormData(initialState);
     if (isObjectEmpty(Object.fromEntries(searchParams))) {
       console.log('The search form is already empty.')
@@ -34,7 +36,7 @@ function useForm(initialState: SearchParams) {
     setSearchParams();
   }
 
-  function onSubmitForm(event) {
+  function onSubmitForm(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (isObjectEmpty(formData)) {
       console.log('The search form is empty. Please enter a criteria then try for a new search!')

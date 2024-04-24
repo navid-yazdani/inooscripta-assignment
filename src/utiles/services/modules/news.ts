@@ -1,11 +1,10 @@
 import {request} from '../config/publicRequest.ts';
-import {Articles} from "../type.ts";
+import {queryParams} from "../type.ts";
 
 const News = {
-    getNews(params) {
-        console.log(params)
-        return request.get<Articles>('/top-headlines' + '?sources=bbc-news&apiKey=551d8f3a4b804e24b9096d7d98c57790')
-    },
+  getNews(baseUrl: string, params: object) {
+    return request.get<queryParams>(baseUrl, params)
+  },
 };
 
 export default News;

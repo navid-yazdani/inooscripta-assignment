@@ -1,27 +1,29 @@
-export interface axiosHeader {
-  "content-type"?: string;
-  "Accept"?: string;
-  "Accept-Language"?: string;
+export interface queryParams {
+  response?: {
+   results?: article[]
+  }
+  articles?: article[] | {
+    results?: article[]
+  }
 }
 
-export interface axiosResult {
-  status: string;
-  totalResults: number;
-}
-
-export interface Articles extends axiosResult {
-  articles: Article[]
-}
-
-export interface Article {
-  id: string;
-  publishedAt: EpochTimeStamp;
-  description: string;
+export type article = {
+  author: string | undefined
+  authors?: string[]
+  title: string
+  description: string
+  image?: string
+  publishedAt: string
   source: {
-    id: string;
-    name: string;
-  };
-  author: string;
-  title: string;
-  urlToImage: string;
+    name?: string,
+    title?: string
+  },
+  urlToImage?: string,
+  body?: string,
+  webTitle?: string,
+  webPublicationDate?: string
+}
+
+export type params = {
+  [key: string]: string
 }
